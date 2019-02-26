@@ -1,0 +1,38 @@
+import com.jeff.*
+
+apply plugin: 'java'
+ext.versionFile = file('version.properties')
+
+
+task loadVersion {
+    project.version = readVersion()
+    logger.quiet 'loadVersion'
+}
+
+ProjectVersion readVersion() {
+    logger.quiet 'Reading the version file.'
+
+    if (!versionFile.exists()) {
+        throw new GradleException("Required version file does not exit: $versionFile.canonicalPath")
+    }
+
+    Properties versionProps = new Properties()
+
+    versionFile.withInputStream { stream ->
+        versionProps.load(stream)
+    }
+
+    new ProjectVersion(maj: versionProps.major.toInteger(), min: versionProps.minor.toInteger(), prodReady: versionProps.release.toBoolean())
+}
+
+task makeReleaseVersion(type: ReleaseVersionTask) {
+    release = !version.prodReady
+    destFile = versionFile
+    logger.quiet 'makeReleaseVersion'
+}
+//increment Version
+task incrementVersion(type: IncrementingVersionTask){
+	currentVersion = project.version
+	destFile = versionFile
+	incrementField = 'minor'//assign field
+}
